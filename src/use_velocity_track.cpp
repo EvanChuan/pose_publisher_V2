@@ -92,6 +92,7 @@ void robot_position_callback( const geometry_msgs::PoseWithCovarianceStamped::Co
 
 int main (int argc, char ** argv)
 {
+    double x_prev = 0, y_prev = 0;
 
     ros::init(argc,argv,"velocity_publisher");
     ros::NodeHandle n;
@@ -109,37 +110,50 @@ int main (int argc, char ** argv)
     
     while(ros::ok())
     {
-        ros::Duration(2).sleep();
+        ros::Duration(1).sleep();
         if(tracking)
         {
-        double x_arr=(legs_published.position.x-bot_pos.position.x)*0.7;
-        double y_arr=(legs_published.position.y-bot_pos.position.y)*0.7;
+            double x_arr=(legs_published.position.x-bot_pos.position.x)*0.7;
+            double y_arr=(legs_published.position.y-bot_pos.position.y)*0.7;
 
-        double x_final=bot_pos.position.x+x_arr;
-        double y_final=bot_pos.position.y+y_arr;
+            double angle_on_map = 2*asin(bot_pos.orientation.z);
 
 
-        cout <<"x"<< x_final <<endl;
-        cout <<"y"<< y_final <<endl;
-        move_base_msgs::MoveBaseGoal goal;
+            double x_final=bot_pos.position.x+x_arr;
+            double y_final=bot_pos.position.y+y_arr;
+            double angle_final = angle_on_map + heading_angle;
 
-        
-        //we'll send a goal to the robot to move 1 meter forward
-        goal.target_pose.header.frame_id = "map";
-        goal.target_pose.header.stamp = ros::Time::now();
-        goal.target_pose.pose.position.x = x_final;
-        goal.target_pose.pose.position.y = y_final;
-        goal.target_pose.pose.orientation.z = sin(heading_angle/2);
-        goal.target_pose.pose.orientation.w = cos(heading_angle/2);
+            double x_dif = x_final-x_prev;
+            double y_dif = y_final-y_prev;
+            if( (x_dif*x_dif+y_dif*y_dif)>0.15*0.15 )//goals are not too close
+            {
+                move_base_msgs::MoveBaseGoal goal;
 
-        /*ac.sendGoal(goal);
+                //we'll send a goal to the robot to move 1 meter forward
+                goal.target_pose.header.frame_id = "map";
+                goal.target_pose.header.stamp = ros::Time::now();
+                goal.target_pose.pose.position.x = x_final;
+                goal.target_pose.pose.position.y = y_final;
+                goal.target_pose.pose.orientation.z = sin(angle_final/2);
+                goal.target_pose.pose.orientation.w = cos(angle_final/2);
 
-        ac.waitForResult();
+                x_prev = x_final;
+                y_prev = y_final;
 
-        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-        ROS_INFO("tracking");
-        else
-        ROS_INFO("no traget");*/
+                cout <<"x_final"<< x_final <<endl;
+                cout <<"y_final"<< y_final <<endl;
+                cout <<"angle_final"<< angle_final/3.14*180 << endl;
+
+
+                ac.sendGoal(goal);
+
+                //ac.waitForResult();
+                /*
+                if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+                    ROS_INFO("tracking");
+                else
+                    ROS_INFO("no traget");*/
+            }
         }
         ros::spinOnce();
     }
@@ -148,3 +162,5 @@ int main (int argc, char ** argv)
 
 
 }
+
+
