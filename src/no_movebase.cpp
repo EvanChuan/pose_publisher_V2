@@ -298,7 +298,7 @@ int main (int argc, char ** argv)
 {
     ros::init(argc,argv,"velocity_publisher");
     ros::NodeHandle n;
-    cmdpub= n.advertise<geometry_msgs::Twist> ("/ironfish_diff_drive_controller/cmd_vel", 1);
+    cmdpub= n.advertise<geometry_msgs::Twist> ("/RosAria/cmd_vel", 1);
     ros::Subscriber sub_5=n.subscribe("/darknet_ros/bounding_boxes",1,bounding_boxes_callback);
     ros::Subscriber sub_3=n.subscribe("amcl_pose",1,robot_position_callback);
     ros::Subscriber sub_2=n.subscribe("tracker_angles",1,headercallback);
